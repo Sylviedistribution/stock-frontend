@@ -33,11 +33,10 @@ export default function SignInForm() {
 
       if (response.status === 200) {
         toast.success("Connexion réussie !");
-        // 🔹 Met à jour Recoil
+        // Met à jour Recoil
         setAuthToken(response.data.token || "");
         setCurrentUser(response.data.user);
 
-        // 🔹 Stocke dans localStorage (facultatif mais utile)
         localStorage.setItem("token", response.data.token || "");
         localStorage.setItem("user", JSON.stringify(response.data.user));
         navigate("/");

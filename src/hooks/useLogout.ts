@@ -1,4 +1,3 @@
-// src/hooks/useLogout.ts
 import { useResetRecoilState } from "recoil";
 import { authTokenState, currentUserState } from "../state/authState";
 import { toast } from "sonner";
