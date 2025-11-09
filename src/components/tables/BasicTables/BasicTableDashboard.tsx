@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import dashboardApi from "../../../api/dashboardApi";
 import {
   Table,
   TableBody,
@@ -6,171 +8,91 @@ import {
   TableRow,
 } from "../../ui/table";
 
-import Badge from "../../ui/badge/Badge";
-
-interface Order {
-  id: number;
-  user: {
-    image: string;
-    name: string;
-    role: string;
-  };
-  projectName: string;
-  team: {
-    images: string[];
-  };
-  status: string;
-  budget: string;
+// Définition du type des produits
+export interface TopProduct {
+  product: string;
+  sold: number;
+  remaining: number;
+  price: number;
 }
 
-// Define the table data using the interface
-const tableData: Order[] = [
-  {
-    id: 1,
-    user: {
-      image: "/images/user/user-17.jpg",
-      name: "Lindsey Curtis",
-      role: "Web Designer",
-    },
-    projectName: "Agency Website",
-    team: {
-      images: [
-        "/images/user/user-22.jpg",
-        "/images/user/user-23.jpg",
-        "/images/user/user-24.jpg",
-      ],
-    },
-    budget: "3.9K",
-    status: "Active",
-  },
-  {
-    id: 2,
-    user: {
-      image: "/images/user/user-18.jpg",
-      name: "Kaiya George",
-      role: "Project Manager",
-    },
-    projectName: "Technology",
-    team: {
-      images: ["/images/user/user-25.jpg", "/images/user/user-26.jpg"],
-    },
-    budget: "24.9K",
-    status: "Pending",
-  },
-  {
-    id: 3,
-    user: {
-      image: "/images/user/user-17.jpg",
-      name: "Zain Geidt",
-      role: "Content Writing",
-    },
-    projectName: "Blog Writing",
-    team: {
-      images: ["/images/user/user-27.jpg"],
-    },
-    budget: "12.7K",
-    status: "Active",
-  },
-  {
-    id: 4,
-    user: {
-      image: "/images/user/user-20.jpg",
-      name: "Abram Schleifer",
-      role: "Digital Marketer",
-    },
-    projectName: "Social Media",
-    team: {
-      images: [
-        "/images/user/user-28.jpg",
-        "/images/user/user-29.jpg",
-        "/images/user/user-30.jpg",
-      ],
-    },
-    budget: "2.8K",
-    status: "Cancel",
-  },
-  {
-    id: 5,
-    user: {
-      image: "/images/user/user-21.jpg",
-      name: "Carla George",
-      role: "Front-end Developer",
-    },
-    projectName: "Website",
-    team: {
-      images: [
-        "/images/user/user-31.jpg",
-        "/images/user/user-32.jpg",
-        "/images/user/user-33.jpg",
-      ],
-    },
-    budget: "4.5K",
-    status: "Active",
-  },
-];
+// Props optionnelles pour le composant
+interface BasicTableDashboardProps {
+  topSellingStock?: TopProduct[];
+}
 
-export default function BasicTableDashboard() {
+export default function BasicTableDashboard({ topSellingStock }: BasicTableDashboardProps) {
+  const [products, setProducts] = useState<TopProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Si la prop est fournie depuis le parent, on l’utilise directement.
+  // Sinon, on fetch via l’API.
+  useEffect(() => {
+    if (topSellingStock && topSellingStock.length > 0) {
+      setProducts(topSellingStock);
+      setLoading(false);
+    } else {
+      dashboardApi
+        .getTopProducts()
+        .then((data) => setProducts(data))
+        .finally(() => setLoading(false));
+    }
+  }, [topSellingStock]);
+
+  if (loading) return <div className="text-center py-10">Chargement des produits...</div>;
+
+  if (products.length === 0)
+    return <div className="text-center py-10 text-gray-500">Aucun produit trouvé.</div>;
+
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
       <div className="max-w-full overflow-x-auto">
         <Table>
-          {/* Table Header */}
+          {/* En-têtes de colonnes */}
           <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
             <TableRow>
               <TableCell
                 isHeader
                 className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
               >
-                Name
+                Produit
               </TableCell>
               <TableCell
                 isHeader
                 className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
               >
-                Sold quantity
+                Quantité vendue
               </TableCell>
               <TableCell
                 isHeader
                 className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
               >
-                Remain quantity
+                Stock restant
               </TableCell>
               <TableCell
                 isHeader
                 className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
               >
-                Price
+                Prix (FCFA)
               </TableCell>
             </TableRow>
           </TableHeader>
 
-          {/* Table Body */}
+          {/* Corps du tableau */}
           <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-            {tableData.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                  {order.projectName}
+            {products.map((p, index) => (
+              <TableRow key={index}>
+                <TableCell className="px-4 py-3 text-gray-800 dark:text-gray-300 font-medium">
+                  {p.product}
                 </TableCell>
-
-                <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                  <Badge
-                    size="sm"
-                    color={
-                      order.status === "Active"
-                        ? "success"
-                        : order.status === "Pending"
-                        ? "warning"
-                        : "error"
-                    }
-                  >
-                    {order.status}
-                  </Badge>
+                <TableCell className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                  {p.sold.toLocaleString()}
                 </TableCell>
-                <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  {order.budget}
+                <TableCell className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                  {p.remaining.toLocaleString()}
                 </TableCell>
-                 <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  {order.budget}
+                <TableCell className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                  {p.price.toLocaleString("fr-FR")}
                 </TableCell>
               </TableRow>
             ))}

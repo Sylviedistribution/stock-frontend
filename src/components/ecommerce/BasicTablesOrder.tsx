@@ -1,6 +1,6 @@
 import ComponentCard from "../common/ComponentCard";
 import PageMeta from "../common/PageMeta";
-import BasicTableOne from "../tables/BasicTables/BasicTableDashboard";
+import BasicTableOrder from "../tables/BasicTables/BasicTableOrder";
 
 export default function BasicTables() {
   return (
@@ -11,7 +11,7 @@ export default function BasicTables() {
       />
       <div className="space-y-6">
         <ComponentCard title="Orders">
-          <BasicTableOne />
+          <BasicTableOrder />
         </ComponentCard>
       </div>
     </>

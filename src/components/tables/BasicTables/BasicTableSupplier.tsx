@@ -1,3 +1,10 @@
+import { useEffect, useState } from "react";
+import SuppliersApi from "../../../api/suppliersApi";
+import CategoriesApi from "../../../api/categoriesApi";
+import { Supplier } from "../../../types/Supplier";
+import { Category } from "../../../types/Category";
+import SupplierForm from "../../forms/SupplierForm";
+import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -6,216 +13,194 @@ import {
   TableRow,
 } from "../../ui/table";
 
-import Badge from "../../ui/badge/Badge";
+export default function Suppliers() {
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
 
-interface Order {
-  id: number;
-  user: {
-    image: string;
-    name: string;
-    role: string;
+  // Pagination meta
+  const [meta, setMeta] = useState({
+    current_page: 1,
+    last_page: 1,
+    per_page: 10,
+    total: 0,
+  });
+
+  const openForm = () => setShowForm(true);
+  const closeForm = () => setShowForm(false);
+
+  // === Charger les fournisseurs et catégories ===
+  const fetchSuppliers = async (page = 1) => {
+    try {
+      setLoading(true);
+      const [supRes] = await Promise.all([
+        SuppliersApi.getAll1(page),
+      ]);
+
+      const supplierArray = Array.isArray(supRes.suppliers)
+        ? supRes.suppliers
+        : Array.isArray(supRes.suppliers)
+        ? supRes.suppliers
+        : [];
+
+      setSuppliers(supplierArray);
+      setMeta(supRes.meta || {});
+    } catch (error) {
+      console.error("❌ Erreur lors du chargement des fournisseurs :", error);
+    } finally {
+      setLoading(false);
+    }
   };
-  projectName: string;
-  team: {
-    images: string[];
+
+  useEffect(() => {
+    fetchSuppliers();
+  }, []);
+
+  // Pagination
+  const handlePrev = () => {
+    if (meta.current_page > 1) fetchSuppliers(meta.current_page - 1);
   };
-  status: string;
-  budget: string;
-}
 
-// Define the table data using the interface
-const tableData: Order[] = [
-  {
-    id: 1,
-    user: {
-      image: "/images/user/user-17.jpg",
-      name: "Lindsey Curtis",
-      role: "Web Designer",
-    },
-    projectName: "Agency Website",
-    team: {
-      images: [
-        "/images/user/user-22.jpg",
-        "/images/user/user-23.jpg",
-        "/images/user/user-24.jpg",
-      ],
-    },
-    budget: "3.9K",
-    status: "Active",
-  },
-  {
-    id: 2,
-    user: {
-      image: "/images/user/user-18.jpg",
-      name: "Kaiya George",
-      role: "Project Manager",
-    },
-    projectName: "Technology",
-    team: {
-      images: ["/images/user/user-25.jpg", "/images/user/user-26.jpg"],
-    },
-    budget: "24.9K",
-    status: "Pending",
-  },
-  {
-    id: 3,
-    user: {
-      image: "/images/user/user-17.jpg",
-      name: "Zain Geidt",
-      role: "Content Writing",
-    },
-    projectName: "Blog Writing",
-    team: {
-      images: ["/images/user/user-27.jpg"],
-    },
-    budget: "12.7K",
-    status: "Active",
-  },
-  {
-    id: 4,
-    user: {
-      image: "/images/user/user-20.jpg",
-      name: "Abram Schleifer",
-      role: "Digital Marketer",
-    },
-    projectName: "Social Media",
-    team: {
-      images: [
-        "/images/user/user-28.jpg",
-        "/images/user/user-29.jpg",
-        "/images/user/user-30.jpg",
-      ],
-    },
-    budget: "2.8K",
-    status: "Cancel",
-  },
-  {
-    id: 5,
-    user: {
-      image: "/images/user/user-21.jpg",
-      name: "Carla George",
-      role: "Front-end Developer",
-    },
-    projectName: "Website",
-    team: {
-      images: [
-        "/images/user/user-31.jpg",
-        "/images/user/user-32.jpg",
-        "/images/user/user-33.jpg",
-      ],
-    },
-    budget: "4.5K",
-    status: "Active",
-  },
-];
+  const handleNext = () => {
+    if (meta.current_page < meta.last_page) fetchSuppliers(meta.current_page + 1);
+  };
 
-export default function BasicTableOne() {
+  if (loading)
+    return <div className="text-center text-gray-500 py-10">Chargement...</div>;
+
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-      <div className="max-w-full overflow-x-auto">
+    <div className="p-6 space-y-8">
+      {/* === HEADER === */}
+      <div className="flex flex-col sm:flex-row justify-between items-center">
+        <h2 className="text-xl font-semibold text-gray-700 mb-3 sm:mb-0">
+          Suppliers
+        </h2>
+
+        <div className="flex gap-2">
+          <button
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition"
+            onClick={openForm}
+          >
+            Add Supplier
+          </button>
+          <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition">
+            Filters
+          </button>
+          <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition">
+            Download all
+          </button>
+        </div>
+      </div>
+
+      {/* === MODALE FORM === */}
+      {showForm && (
+        <SupplierForm
+          onClose={closeForm}
+          onSupplierAdded={() => {
+            fetchSuppliers();
+            closeForm();
+          }}
+          categories={categories}
+        />
+      )}
+
+      {/* === TABLE === */}
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-md overflow-x-auto">
         <Table>
-          {/* Table Header */}
-          <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+          <TableHeader className="bg-gray-50">
             <TableRow>
-              <TableCell
-                isHeader
-                className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                User
+              <TableCell isHeader className="text-center text-gray-600 font-semibold">
+                Supplier Name
               </TableCell>
-              <TableCell
-                isHeader
-                className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                Project Name
+              <TableCell isHeader className="text-center text-gray-600 font-semibold">
+                Product
               </TableCell>
-              <TableCell
-                isHeader
-                className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                Team
+              <TableCell isHeader className="text-center text-gray-600 font-semibold">
+                Contact Number
               </TableCell>
-              <TableCell
-                isHeader
-                className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                Status
+              <TableCell isHeader className="text-center text-gray-600 font-semibold">
+                Email
               </TableCell>
-              <TableCell
-                isHeader
-                className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                Budget
+              <TableCell isHeader className="text-center text-gray-600 font-semibold">
+                Type
+              </TableCell>
+              <TableCell isHeader className="text-center text-gray-600 font-semibold">
+                On the way
               </TableCell>
             </TableRow>
           </TableHeader>
 
-          {/* Table Body */}
-          <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-            {tableData.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell className="px-5 py-4 sm:px-6 text-start">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 overflow-hidden rounded-full">
-                      <img
-                        width={40}
-                        height={40}
-                        src={order.user.image}
-                        alt={order.user.name}
-                      />
-                    </div>
-                    <div>
-                      <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                        {order.user.name}
-                      </span>
-                      <span className="block text-gray-500 text-theme-xs dark:text-gray-400">
-                        {order.user.role}
-                      </span>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                  {order.projectName}
-                </TableCell>
-                <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                  <div className="flex -space-x-2">
-                    {order.team.images.map((teamImage, index) => (
-                      <div
-                        key={index}
-                        className="w-6 h-6 overflow-hidden border-2 border-white rounded-full dark:border-gray-900"
-                      >
-                        <img
-                          width={24}
-                          height={24}
-                          src={teamImage}
-                          alt={`Team member ${index + 1}`}
-                          className="w-full size-6"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </TableCell>
-                <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                  <Badge
-                    size="sm"
-                    color={
-                      order.status === "Active"
-                        ? "success"
-                        : order.status === "Pending"
-                        ? "warning"
-                        : "error"
-                    }
+          <TableBody>
+            {Array.isArray(suppliers) && suppliers.length > 0 ? (
+              suppliers.map((s) => (
+                <TableRow key={s.id} className="hover:bg-gray-50 transition duration-150">
+                  <TableCell className="text-center font-medium text-gray-800">
+                    {s.name}
+                  </TableCell>
+                  <TableCell className="text-center text-gray-700">
+                    {
+                    s.product?[0] : "-"}
+                  </TableCell>
+                  <TableCell className="text-center text-gray-700">
+                    {s.phone}
+                  </TableCell>
+                  <TableCell className="text-center text-gray-700">
+                    {s.email}
+                  </TableCell>
+                  <TableCell
+                    className={`text-center font-semibold ${
+                      s.takes_back_returns ? "text-green-600" : "text-red-500"
+                    }`}
                   >
-                    {order.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  {order.budget}
+                    {s.takes_back_returns? "Taking Return" : "Not Taking Return"}
+                  </TableCell>
+                  <TableCell className="text-center text-gray-700">
+                    {s.takes_back_returns ?? "-"}
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell className="text-center text-gray-400 py-6">
+                  Aucun fournisseur disponible
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* === PAGINATION === */}
+      <div className="flex justify-between items-center px-6 py-4 border-t border-gray-100 text-sm text-gray-600">
+        <button
+          onClick={handlePrev}
+          disabled={meta.current_page === 1}
+          className={`flex items-center gap-1 px-3 py-1 border rounded-md ${
+            meta.current_page === 1
+              ? "text-gray-400 border-gray-200 cursor-not-allowed"
+              : "text-gray-700 border-gray-300 hover:bg-gray-50"
+          }`}
+        >
+          <ArrowLeftIcon size={16} /> Previous
+        </button>
+
+        <p>
+          Page <span className="font-semibold">{meta.current_page}</span> of{" "}
+          <span className="font-semibold">{meta.last_page}</span>
+        </p>
+
+        <button
+          onClick={handleNext}
+          disabled={meta.current_page === meta.last_page}
+          className={`flex items-center gap-1 px-3 py-1 border rounded-md ${
+            meta.current_page === meta.last_page
+              ? "text-gray-400 border-gray-200 cursor-not-allowed"
+              : "text-gray-700 border-gray-300 hover:bg-gray-50"
+          }`}
+        >
+          Next <ArrowRightIcon size={16} />
+        </button>
       </div>
     </div>
   );

@@ -12,7 +12,7 @@ type BadgeColor =
 interface BadgeProps {
   variant?: BadgeVariant; // Light or solid variant
   size?: BadgeSize; // Badge size
-  color?: BadgeColor; // Badge color
+  color?: string; // Badge color
   startIcon?: React.ReactNode; // Icon at the start
   endIcon?: React.ReactNode; // Icon at the end
   children: React.ReactNode; // Badge content
